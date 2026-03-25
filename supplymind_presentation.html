@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SupplyMind – Agentic AI OS</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #05070f;
+      --surface: #0d1117;
+      --surface2: #161b27;
+      --purple: #8b5cf6;
+      --purple-light: #a78bfa;
+      --teal: #10b981;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --white: #f0f4ff;
+      --muted: #6b7280;
+      --border: rgba(139, 92, 246, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── SLIDES CONTAINER ── */
+    .slides-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s cubic-bezier(.4, 0, .2, 1), transform 0.6s cubic-bezier(.4, 0, .2, 1);
+      transform: translateY(30px);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+
+    .slide.exit {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+
+    /* ── CANVAS BG ── */
+    canvas#bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .slide>* {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 10px 20px;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .nav-dot.active {
+      background: var(--purple);
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+
+    .nav-btn:hover {
+      color: var(--white);
+    }
+
+    .slide-counter {
+      position: fixed;
+      top: 24px;
+      right: 36px;
+      z-index: 100;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--purple), var(--teal));
+      transition: width 0.5s ease;
+      z-index: 100;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* ── LOGO BADGE ── */
+    .logo-badge {
+      position: fixed;
+      top: 20px;
+      left: 32px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--white);
+      opacity: 0.7;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 16px;
+      opacity: 0.9;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(52px, 7vw, 86px);
+      line-height: 1.0;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: clamp(32px, 4vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--purple-light), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-text-warm {
+      background: linear-gradient(135deg, var(--amber), var(--red));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    p.lead {
+      font-size: 18px;
+      color: rgba(240, 244, 255, 0.65);
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.04), transparent);
+      pointer-events: none;
+    }
+
+    .card-glow-purple::after {
+      content: '';
+      position: absolute;
+      top: -40px;
+      left: -40px;
+      width: 120px;
+      height: 120px;
+      background: var(--purple);
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .card-glow-teal::after {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 120px;
+      height: 120px;
+      background: var(--teal);
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    /* ── TAGS / BADGES ── */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-purple {
+      color: var(--purple-light);
+      border-color: rgba(139, 92, 246, 0.4);
+      background: rgba(139, 92, 246, 0.1);
+    }
+
+    .tag-teal {
+      color: var(--teal);
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .tag-blue {
+      color: var(--blue);
+      border-color: rgba(59, 130, 246, 0.4);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .tag-amber {
+      color: var(--amber);
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    /* ── GRID HELPERS ── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      width: 100%;
+    }
+
+    /* ── METRIC BLOCK ── */
+    .metric {
+      text-align: center;
+    }
+
+    .metric .value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 42px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .metric .label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── AGENT NODE ── */
+    .agent-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agent-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      position: relative;
+    }
+
+    .agent-circle::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px dashed;
+      opacity: 0.3;
+      animation: spin 8s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg)
+      }
+
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .agent-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .agent-role {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── FLOW ARROW ── */
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--muted);
+      font-size: 22px;
+    }
+
+    /* ── TECH TABLE ── */
+    .tech-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .tech-table th {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tech-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+      vertical-align: middle;
+    }
+
+    .tech-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tech-table tr:hover td {
+      background: rgba(139, 92, 246, 0.04);
+    }
+
+    .tech-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    /* ── ROADMAP ── */
+    .roadmap-phase {
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid;
+      position: relative;
+    }
+
+    .roadmap-phase h4 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .roadmap-phase .period {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      opacity: 0.6;
+      margin-bottom: 14px;
+      letter-spacing: 0.1em;
+    }
+
+    .roadmap-item {
+      font-size: 13px;
+      padding: 5px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(240, 244, 255, 0.75);
+    }
+
+    .roadmap-item::before {
+      content: '→';
+      opacity: 0.5;
+      font-size: 11px;
+    }
+
+    /* ── GLOW EFFECTS ── */
+    .glow-bg {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── SLIDE 1 SPECIFIC ── */
+    .title-slide {
+      text-align: center;
+      gap: 0;
+    }
+
+    .title-slide h1 {
+      margin-bottom: 16px;
+    }
+
+    .team-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 28px;
+    }
+
+    .team-chip {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      background: rgba(139, 92, 246, 0.08);
+      color: rgba(240, 244, 255, 0.7);
+      letter-spacing: 0.04em;
+    }
+
+    .tagline {
+      font-size: 20px;
+      font-weight: 300;
+      color: rgba(240, 244, 255, 0.55);
+      margin-bottom: 10px;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── PROBLEM POINTS ── */
+    .problem-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 20px;
+      background: var(--surface2);
+      border-radius: 12px;
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      transition: border-color 0.2s;
+    }
+
+    .problem-item:hover {
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .problem-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .problem-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 3px;
+    }
+
+    .problem-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── SOLUTION PILLS ── */
+    .solution-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--surface2);
+      border-radius: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .solution-pill .icon {
+      font-size: 20px;
+    }
+
+    .solution-pill .text {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* ── ARCH DIAGRAM ── */
+    .arch-layer {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .arch-connector {
+      display: flex;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--muted);
+      margin: 2px 0;
+    }
+
+    /* ── ROI BARS ── */
+    .roi-bar-wrap {
+      margin-bottom: 12px;
+    }
+
+    .roi-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .roi-bar-label .amount {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--teal);
+    }
+
+    .roi-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .roi-fill {
+      height: 100%;
+      border-radius: 4px;
+      animation: growBar 1.2s ease-out forwards;
+      transform-origin: left;
+    }
+
+    @keyframes growBar {
+      from {
+        width: 0;
+      }
+    }
+
+    /* ── DEMO SLIDE ── */
+    .demo-frame {
+      width: 100%;
+      max-width: 900px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: 0 0 60px rgba(139, 92, 246, 0.15);
+    }
+
+    .demo-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .demo-url {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+
+    .demo-content {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .demo-kpi {
+      background: var(--surface);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .demo-kpi .val {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.03em;
+    }
+
+    .demo-kpi .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── THANK YOU ── */
+    .thankyou-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .person-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .person-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .person-name {
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: rgba(240, 244, 255, 0.85);
+    }
+
+    /* ── PULSE ANIMATION ── */
+    .pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    /* ── KEYBOARD HINT ── */
+    .keyboard-hint {
+      position: fixed;
+      bottom: 90px;
+      right: 36px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.6;
+    }
+
+    .kbd {
+      border: 1px solid var(--muted);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+    }
+
+    /* ── SECTION DIVIDER ── */
+    .divider {
+      width: 48px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--purple), var(--teal));
+      border-radius: 2px;
+      margin: 16px 0;
+    }
+
+    /* ── WORKFLOW GRID ── */
+    .workflow-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(139, 92, 246, 0.06);
+      border-radius: 8px;
+      border: 1px solid rgba(139, 92, 246, 0.12);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .workflow-item:hover {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.25);
+    }
+
+    .workflow-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--purple-light);
+      min-width: 24px;
+      opacity: 0.7;
+    }
+
+    /* ── CONNECTOR LINES ── */
+    .connector {
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    /* ── MESSAGE BUS ── */
+    .bus-msg {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: rgba(139, 92, 246, 0.05);
+      border-left: 2px solid var(--purple);
+      border-radius: 0 6px 6px 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      margin-bottom: 6px;
+      animation: fadeSlide 0.5s ease-out;
+    }
+
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="bg"></canvas>
+
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="logo-badge">
+    <div class="logo-icon">⚡</div>
+    SupplyMind
+  </div>
+  <div class="slide-counter" id="slideCounter">01 / 09</div>
+  <div class="keyboard-hint"><span class="kbd">←</span><span class="kbd">→</span> to navigate</div>
+
+  <!-- ══════════════════════════════════════════════════
+     SLIDE 1 – TITLE
+══════════════════════════════════════════════════ -->
+  <div class="slides-wrapper">
+    <div class="slide active" id="slide-1">
+      <div class="glow-bg" style="width:400px;height:400px;background:var(--purple);opacity:0.08;top:-80px;left:-80px;">
+      </div>
+      <div class="glow-bg"
+        style="width:300px;height:300px;background:var(--teal);opacity:0.07;bottom:-60px;right:-60px;"></div>
+
+      <div style="text-align:center;">
+        <div class="eyebrow">LLM Project · 2026</div>
+        <h1>Supply<span class="gradient-text">Mind</span></h1>
+        <p class="tagline" style="font-size:22px;margin-top:10px;">Agentic AI Operating System</p>
+        <p class="tagline">for Supply Chain Intelligence</p>
+        <div class="divider" style="margin:20px auto;"></div>
+        <p style="font-size:15px;color:var(--muted);margin-bottom:24px;">Transform reactive supply chains into
+          autonomous decision-making ecosystems</p>
+
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:28px;flex-wrap:wrap;">
+          <span class="tag tag-purple">LangChain</span>
+          <span class="tag tag-teal">Ollama Llama3</span>
+          <span class="tag tag-blue">FastAPI</span>
+          <span class="tag tag-amber">React</span>
+          <span class="tag tag-purple">MongoDB</span>
+        </div>
+
+        <div class="team-list">
+          <span class="team-chip">Rushikesh Sonwane</span>
+          <span class="team-chip">Rishita Merchant</span>
+          <span class="team-chip">Mohini Singh</span>
+          <span class="team-chip">Parankusam Urmila</span>
+          <span class="team-chip">Saksham Agrawal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 2 – PROBLEM STATEMENT
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-2">
+      <div class="glow-bg" style="width:350px;height:350px;background:var(--red);opacity:0.06;top:0;right:0;"></div>
+
+      <div style="width:100%;max-width:1000px;">
+        <div class="eyebrow">The Challenge</div>
+        <h2>Why Supply Chains <span class="gradient-text-warm">Break</span></h2>
+        <div class="divider"></div>
+        <p class="lead" style="margin-bottom:32px;">Modern supply chains are reactive, fragmented, and unable to act
+          autonomously — causing billions in losses annually.</p>
+
+        <div class="grid-2" style="gap:14px;">
+          <div class="problem-item">
+            <div class="problem-icon">📉</div>
+            <div>
+              <div class="problem-title">Demand Volatility</div>
+              <div class="problem-desc">Manual forecasting fails to capture real-time shifts, leading to stockouts and
+                overstock scenarios.</div>
+            </div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-icon">⚠️</div>
+            <div>
+              <div class="problem-title">Supplier Risk Blindspot</div>
+              <div class="problem-desc">No proactive risk scoring — financial, quality, and geopolitical threats go
+                undetected until it's too late.</div>
+            </div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-icon">🏭</div>
+            <div>
+              <div class="problem-title">Inventory Imbalance</div>
+              <div class="problem-desc">Warehouses operate in silos, resulting in misallocated stock, high carrying
+                costs, and fulfillment gaps.</div>
+            </div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-icon">🚚</div>
+            <div>
+              <div class="problem-title">Logistics Inefficiency</div>
+              <div class="problem-desc">Route decisions made manually, missing dynamic cost vs speed optimisation and
+                shipment delay prediction.</div>
+            </div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-icon">💸</div>
+            <div>
+              <div class="problem-title">Rising Operational Costs</div>
+              <div class="problem-desc">Procurement bottlenecks and maverick spending waste 12–20% of supply chain
+                budgets annually.</div>
+            </div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-icon">🌍</div>
+            <div>
+              <div class="problem-title">Sustainability Gaps</div>
+              <div class="problem-desc">No framework to track environmental impact across suppliers, logistics, and
+                warehouse operations.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 3 – SOLUTION
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-3">
+      <div class="glow-bg" style="width:400px;height:400px;background:var(--teal);opacity:0.07;bottom:0;right:0;"></div>
+
+      <div style="width:100%;max-width:1050px;">
+        <div class="eyebrow">Our Approach</div>
+        <h2>Introducing <span class="gradient-text">SupplyMind</span></h2>
+        <div class="divider"></div>
+
+        <div class="grid-2" style="align-items:start;gap:28px;">
+          <div>
+            <p class="lead" style="margin-bottom:20px;">An <strong style="color:var(--white);">Agentic AI OS</strong>
+              that autonomously orchestrates global supply chains — predicting, adapting, and optimising in real-time
+              through a 5-agent LangChain system.</p>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="solution-pill">
+                <span class="icon">🤖</span>
+                <span class="text">5 Specialized AI Agents running in coordination via LangGraph</span>
+              </div>
+              <div class="solution-pill">
+                <span class="icon">🧠</span>
+                <span class="text">Hybrid ML + LLM decision system (Ollama Llama3 locally)</span>
+              </div>
+              <div class="solution-pill">
+                <span class="icon">⚡</span>
+                <span class="text">10 Autonomous Workflows covering end-to-end supply ops</span>
+              </div>
+              <div class="solution-pill">
+                <span class="icon">📊</span>
+                <span class="text">Real-time dashboard with live KPIs and agent state visibility</span>
+              </div>
+              <div class="solution-pill">
+                <span class="icon">🔄</span>
+                <span class="text">Auto-generated POs, risk alerts, and procurement decisions</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card card-glow-purple" style="margin-bottom:14px;">
+              <div
+                style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em;">
+                WORKFLOWS COVERED</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="workflow-item"><span class="workflow-num">01</span>Demand Forecasting</div>
+                <div class="workflow-item"><span class="workflow-num">02</span>Inventory Optimization</div>
+                <div class="workflow-item"><span class="workflow-num">03</span>Warehouse Automation</div>
+                <div class="workflow-item"><span class="workflow-num">04</span>Route Optimization</div>
+                <div class="workflow-item"><span class="workflow-num">05</span>Delay Prediction</div>
+                <div class="workflow-item"><span class="workflow-num">06</span>Supplier Risk Detection</div>
+                <div class="workflow-item"><span class="workflow-num">07</span>Procurement Automation</div>
+                <div class="workflow-item"><span class="workflow-num">08</span>Cost Optimization</div>
+                <div class="workflow-item"><span class="workflow-num">09</span>Production Planning</div>
+                <div class="workflow-item"><span class="workflow-num">10</span>Sustainability Tracking</div>
+              </div>
+            </div>
+            <div class="card card-glow-teal">
+              <div
+                style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em;">
+                CORE INNOVATION</div>
+              <p style="font-size:13px;color:rgba(240,244,255,0.7);line-height:1.6;">LLM-orchestrated multi-agent
+                architecture with autonomous exception handling, real-time supply chain visibility, and <span
+                  style="color:var(--teal);font-weight:600;">15–25% cost reduction</span> through optimised operations.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 4 – TECH STACK
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-4">
+      <div class="glow-bg" style="width:300px;height:300px;background:var(--blue);opacity:0.07;top:0;left:50%;"></div>
+
+      <div style="width:100%;max-width:900px;">
+        <div class="eyebrow">Engineering Foundation</div>
+        <h2>Tech <span class="gradient-text">Stack</span></h2>
+        <div class="divider"></div>
+
+        <div class="grid-2" style="gap:20px;align-items:start;">
+          <!-- Frontend -->
+          <div class="card card-glow-blue">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+              <span style="font-size:18px;">🖥️</span>
+              <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;">Frontend</span>
+              <span class="tag tag-blue" style="margin-left:auto;">Client</span>
+            </div>
+            <table class="tech-table">
+              <thead>
+                <tr>
+                  <th>Technology</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="tech-dot" style="background:#61DAFB;"></span>React 18</td>
+                  <td style="color:var(--muted);">SPA Framework</td>
+                </tr>
+                <tr>
+                  <td><span class="tech-dot" style="background:#8b5cf6;"></span>React Router</td>
+                  <td style="color:var(--muted);">Page Navigation</td>
+                </tr>
+                <tr>
+                  <td><span class="tech-dot" style="background:#06b6d4;"></span>Tailwind CSS</td>
+                  <td style="color:var(--muted);">Utility Styling</td>
+                </tr>
+                <tr>
+                  <td><span class="tech-dot" style="background:#f59e0b;"></span>Shadcn/UI</td>
+                  <td style="color:var(--muted);">UI Components</td>
+                </tr>
+                <tr>
+                  <td><span class="tech-dot" style="background:#ef4444;"></span>Axios</td>
+                  <td style="color:var(--muted);">HTTP + Polling</td>
+                </tr>
+                <tr>
+                  <td><span class="tech-dot" style="background:#10b981;"></span>Recharts</td>
+                  <td style="color:var(--muted);">Data Visualization</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Backend + AI -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="card card-glow-teal">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <span style="font-size:18px;">⚙️</span>
+                <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;">Backend</span>
+                <span class="tag tag-teal" style="margin-left:auto;">Server</span>
+              </div>
+              <table class="tech-table">
+                <thead>
+                  <tr>
+                    <th>Technology</th>
+                    <th>Purpose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#009688;"></span>FastAPI</td>
+                    <td style="color:var(--muted);">REST API + Async</td>
+                  </tr>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#47A248;"></span>MongoDB + Motor</td>
+                    <td style="color:var(--muted);">Async Document DB</td>
+                  </tr>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#f59e0b;"></span>Pandas</td>
+                    <td style="color:var(--muted);">Mock Data Engine</td>
+                  </tr>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#3b82f6;"></span>Uvicorn</td>
+                    <td style="color:var(--muted);">ASGI Server</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card card-glow-purple">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <span style="font-size:18px;">🤖</span>
+                <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;">AI / Agents</span>
+                <span class="tag tag-purple" style="margin-left:auto;">Intelligence</span>
+              </div>
+              <table class="tech-table">
+                <thead>
+                  <tr>
+                    <th>Technology</th>
+                    <th>Purpose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#8b5cf6;"></span>LangChain</td>
+                    <td style="color:var(--muted);">Agent Framework</td>
+                  </tr>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#a78bfa;"></span>LangGraph</td>
+                    <td style="color:var(--muted);">Agent Orchestration</td>
+                  </tr>
+                  <tr>
+                    <td><span class="tech-dot" style="background:#FF6B6B;"></span>Ollama Llama3</td>
+                    <td style="color:var(--muted);">Local LLM Inference</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 5 – SYSTEM ARCHITECTURE
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-5">
+      <div class="glow-bg"
+        style="width:360px;height:360px;background:var(--purple);opacity:0.07;top:50%;left:50%;transform:translate(-50%,-50%);">
+      </div>
+
+      <div style="width:100%;max-width:900px;">
+        <div class="eyebrow">Infrastructure</div>
+        <h2>System <span class="gradient-text">Architecture</span></h2>
+        <div class="divider"></div>
+
+        <div class="grid-2" style="gap:24px;align-items:center;">
+          <!-- Left: layer diagram -->
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div class="arch-layer" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);">
+              <span style="font-size:16px;">🖥️</span>&nbsp; <strong>React SPA</strong>&nbsp;<span
+                style="color:var(--muted);">Dashboard · Workflows · Agents · Analytics</span>
+            </div>
+            <div class="arch-connector">↕</div>
+            <div class="arch-layer" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);">
+              <span style="font-size:16px;">🔌</span>&nbsp; <strong>FastAPI REST</strong>&nbsp;<span
+                style="color:var(--muted);">Validation · Routing · State Management</span>
+            </div>
+            <div class="arch-connector">↕</div>
+            <div class="arch-layer" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.35);">
+              <span style="font-size:16px;">🤖</span>&nbsp; <strong>Multi-Agent Layer</strong>&nbsp;<span
+                style="color:var(--muted);">LangGraph · 5 Agents · Message Bus</span>
+            </div>
+            <div class="arch-connector" style="justify-content:space-around;font-size:14px;">
+              ↙&nbsp;&nbsp;&nbsp;&nbsp;&�&nbsp;&nbsp;&nbsp;&nbsp;↘</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+              <div class="arch-layer"
+                style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);flex-direction:column;gap:4px;text-align:center;padding:10px;">
+                <span style="font-size:18px;">🍃</span><span
+                  style="font-size:12px;"><strong>MongoDB</strong></span><span
+                  style="font-size:10px;color:var(--muted);">Storage / Logs</span>
+              </div>
+              <div class="arch-layer"
+                style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);flex-direction:column;gap:4px;text-align:center;padding:10px;">
+                <span style="font-size:18px;">🦙</span><span style="font-size:12px;"><strong>Ollama</strong></span><span
+                  style="font-size:10px;color:var(--muted);">LLM Inference</span>
+              </div>
+              <div class="arch-layer"
+                style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);flex-direction:column;gap:4px;text-align:center;padding:10px;">
+                <span style="font-size:18px;">📦</span><span
+                  style="font-size:12px;"><strong>Datasets</strong></span><span
+                  style="font-size:10px;color:var(--muted);">Mock Data Engine</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: data flow facts -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="card">
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple-light);margin-bottom:10px;">
+                GET REQUESTS → DATASETS.PY</div>
+              <p style="font-size:13px;color:rgba(240,244,255,0.7);line-height:1.6;">Dashboard KPIs, warehouse data,
+                product lists bypass AI entirely — served directly from Pandas DataFrames for high performance.</p>
+            </div>
+            <div class="card">
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--teal);margin-bottom:10px;">POST
+                REQUESTS → LANGCHAIN</div>
+              <p style="font-size:13px;color:rgba(240,244,255,0.7);line-height:1.6;">Supplier risk analysis and
+                orchestrator tasks trigger the full LangChain agent graph with Ollama LLM reasoning.</p>
+            </div>
+            <div class="card">
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--amber);margin-bottom:10px;">AGENT
+                STATES → POLLING (5s)</div>
+              <p style="font-size:13px;color:rgba(240,244,255,0.7);line-height:1.6;">Frontend polls <code
+                  style="background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">/api/agents/states</code>
+                every 5 sec. Agents cycle through IDLE → THINKING → ACTING → WAITING.</p>
+            </div>
+            <div class="card">
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);margin-bottom:10px;">FALLBACK
+                MODE</div>
+              <p style="font-size:13px;color:rgba(240,244,255,0.7);line-height:1.6;">If Ollama is offline, system
+                degrades gracefully to intelligent mock responses — zero downtime for UI flows.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 6 – AGENT FLOW
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-6">
+      <div class="glow-bg"
+        style="width:400px;height:400px;background:var(--purple);opacity:0.08;top:50%;left:50%;transform:translate(-50%,-50%);">
+      </div>
+
+      <div style="width:100%;max-width:1050px;">
+        <div class="eyebrow">Multi-Agent System</div>
+        <h2>Agent Communication <span class="gradient-text">Flow</span></h2>
+        <div class="divider"></div>
+
+        <div class="grid-2" style="gap:28px;align-items:start;">
+          <!-- Agent Network Visual -->
+          <div>
+            <!-- Orchestrator -->
+            <div style="display:flex;justify-content:center;margin-bottom:8px;">
+              <div class="agent-node">
+                <div class="agent-circle"
+                  style="border-color:var(--purple);background:rgba(139,92,246,0.12);color:var(--purple-light);">
+                  ⚙️
+                  <div
+                    style="position:absolute;inset:0;border-radius:50%;border:2px solid var(--purple);opacity:0.4;animation:pulse 2s infinite;">
+                  </div>
+                </div>
+                <div class="agent-name">Orchestrator</div>
+                <div class="agent-role">Coordinator · Supervisor</div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
+                  <span class="tag tag-purple" style="font-size:10px;">coordinate_agents()</span>
+                  <span class="tag tag-purple" style="font-size:10px;">decompose_task()</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connector down -->
+            <div style="display:flex;justify-content:center;height:28px;align-items:center;">
+              <div style="width:1px;height:100%;background:linear-gradient(to bottom,var(--purple),transparent);"></div>
+            </div>
+
+            <!-- Sub-agents row -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
+              <div class="agent-node">
+                <div class="agent-circle"
+                  style="border-color:var(--blue);background:rgba(59,130,246,0.1);font-size:20px;">📈</div>
+                <div class="agent-name" style="font-size:12px;">Demand</div>
+                <div class="agent-role">Forecaster</div>
+              </div>
+              <div class="agent-node">
+                <div class="agent-circle"
+                  style="border-color:var(--teal);background:rgba(16,185,129,0.1);font-size:20px;">📦</div>
+                <div class="agent-name" style="font-size:12px;">Inventory</div>
+                <div class="agent-role">Optimizer</div>
+              </div>
+              <div class="agent-node">
+                <div class="agent-circle"
+                  style="border-color:var(--amber);background:rgba(245,158,11,0.1);font-size:20px;">⚠️</div>
+                <div class="agent-name" style="font-size:12px;">Supplier</div>
+                <div class="agent-role">Risk Analyst</div>
+              </div>
+              <div class="agent-node">
+                <div class="agent-circle"
+                  style="border-color:var(--red);background:rgba(239,68,68,0.1);font-size:20px;">⚡</div>
+                <div class="agent-name" style="font-size:12px;">Action</div>
+                <div class="agent-role">Executor</div>
+              </div>
+            </div>
+
+            <!-- Message Bus visual -->
+            <div class="card" style="margin-top:10px;">
+              <div
+                style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:10px;letter-spacing:0.1em;">
+                MESSAGE BUS (JSON STATE)</div>
+              <div class="bus-msg"><span style="opacity:0.5;font-size:10px;">orchestrator→demand</span><span
+                  style="color:var(--blue);">analyze_demand_request</span><span
+                  style="margin-left:auto;opacity:0.4;font-size:10px;">THINKING</span></div>
+              <div class="bus-msg" style="border-color:var(--amber);"><span
+                  style="opacity:0.5;font-size:10px;">orchestrator→supplier</span><span
+                  style="color:var(--amber);">risk_analysis_request</span><span
+                  style="margin-left:auto;opacity:0.4;font-size:10px;">ACTING</span></div>
+              <div class="bus-msg" style="border-color:var(--teal);"><span
+                  style="opacity:0.5;font-size:10px;">supplier→orchestrator</span><span
+                  style="color:var(--teal);">risk_analysis_complete</span><span
+                  style="margin-left:auto;opacity:0.4;font-size:10px;">IDLE</span></div>
+            </div>
+          </div>
+
+          <!-- Right: agent responsibilities -->
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div
+              style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em;margin-bottom:4px;">
+              AGENT TOOLS & RESPONSIBILITIES</div>
+            <div class="card" style="padding:16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span>📈</span><strong
+                  style="font-size:14px;color:var(--blue);">Demand Agent</strong></div>
+              <p style="font-size:12px;color:var(--muted);">forecast_demand · analyze_stockout_risk · detect_anomaly</p>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span>📦</span><strong
+                  style="font-size:14px;color:var(--teal);">Inventory Agent</strong></div>
+              <p style="font-size:12px;color:var(--muted);">calculate_reorder_point (EOQ + Safety Stock) ·
+                check_warehouse_levels</p>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span>⚠️</span><strong
+                  style="font-size:14px;color:var(--amber);">Supplier Agent</strong></div>
+              <p style="font-size:12px;color:var(--muted);">score_supplier_risk · get_shipping_options ·
+                get_market_intelligence</p>
+            </div>
+            <div class="card" style="padding:16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span>⚡</span><strong
+                  style="font-size:14px;color:var(--red);">Action Agent</strong></div>
+              <p style="font-size:12px;color:var(--muted);">generate_purchase_order · raise_alerts · log_decisions ·
+                generate_reports</p>
+            </div>
+            <div
+              style="padding:14px;border-radius:10px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);">
+              <div style="font-size:13px;color:rgba(240,244,255,0.7);">Agent states cycle: <span
+                  style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">IDLE</span> → <span
+                  style="font-family:'DM Mono',monospace;font-size:12px;color:var(--amber);">THINKING</span> → <span
+                  style="font-family:'DM Mono',monospace;font-size:12px;color:var(--teal);">ACTING</span> → <span
+                  style="font-family:'DM Mono',monospace;font-size:12px;color:var(--blue);">WAITING</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 7 – WORKFLOWS OVERVIEW
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-7">
+      <div class="glow-bg"
+        style="width:400px;height:400px;background:var(--purple);opacity:0.08;top:50%;left:50%;transform:translate(-50%,-50%);">
+      </div>
+
+      <div style="width:100%;max-width:1050px;">
+        <div class="eyebrow">End-to-End Automation</div>
+        <h2>SupplyMind – Core Supply Chain <span class="gradient-text">Workflows</span></h2>
+        <div class="divider"></div>
+        <p class="lead" style="margin-bottom:24px;">10 autonomous workflows covering every dimension of modern supply
+          chain operations.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--purple);min-width:32px;line-height:1;">
+              01</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Demand Forecasting</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Predicts future product demand using
+                historical demand patterns.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--teal);min-width:32px;line-height:1;">
+              02</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Inventory Optimization</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Determines optimal stock levels across all
+                warehouses.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--blue);min-width:32px;line-height:1;">
+              03</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Warehouse Automation</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Monitors inventory levels and triggers
+                low-stock alerts automatically.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--amber);min-width:32px;line-height:1;">
+              04</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Route Optimization</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Identifies the most efficient
+                transportation routes by cost and speed.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--red);min-width:32px;line-height:1;">
+              05</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Shipment Delay Prediction</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Detects potential delivery delays using
+                historical shipment patterns.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--purple-light);min-width:32px;line-height:1;">
+              06</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Supplier Risk Detection</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Evaluates supplier reliability and
+                identifies supply chain risks.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--teal);min-width:32px;line-height:1;">
+              07</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Procurement Automation</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Auto-generates purchase orders when
+                inventory thresholds are reached.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--blue);min-width:32px;line-height:1;">
+              08</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Logistics Cost Optimization</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Identifies opportunities to reduce
+                transportation and logistics costs.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--amber);min-width:32px;line-height:1;">
+              09</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Production Planning</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Aligns manufacturing schedules with
+                forecasted demand.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px;display:flex;gap:14px;align-items:flex-start;">
+            <div
+              style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--purple);min-width:32px;line-height:1;">
+              10</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:3px;">Sustainability Tracking</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Monitors environmental impact such as
+                carbon emissions across the chain.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 8 – PRODUCT ROADMAP
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-8">
+      <div class="glow-bg" style="width:350px;height:350px;background:var(--teal);opacity:0.06;bottom:0;left:0;"></div>
+      <div class="glow-bg" style="width:280px;height:280px;background:var(--purple);opacity:0.06;top:0;right:0;"></div>
+
+      <div style="width:100%;max-width:1020px;">
+        <div class="eyebrow">Evolution Plan</div>
+        <h2>SupplyMind <span class="gradient-text">Product Roadmap</span></h2>
+        <div class="divider"></div>
+        <p class="lead" style="margin-bottom:28px;">From MVP to a fully autonomous supply chain operating system — in
+          three deliberate phases.</p>
+
+        <!-- Timeline connector -->
+        <div style="position:relative;display:flex;gap:0;margin-bottom:24px;">
+          <!-- Phase connectors -->
+          <div
+            style="position:absolute;top:36px;left:calc(33.3% - 8px);right:calc(33.3% - 8px);height:2px;background:linear-gradient(90deg,var(--teal),var(--blue),var(--purple));z-index:1;">
+          </div>
+
+          <!-- Phase 1 -->
+          <div style="flex:1;padding-right:10px;">
+            <div
+              style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;position:relative;z-index:2;">
+              <div
+                style="width:72px;height:72px;border-radius:50%;background:rgba(16,185,129,0.12);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:8px;">
+                ✅</div>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--teal);letter-spacing:0.1em;">PHASE
+                1 · YEAR 0–1</span>
+            </div>
+            <div class="roadmap-phase" style="border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.05);">
+              <h4 style="color:var(--teal);margin-bottom:14px;">MVP — Live Now</h4>
+              <div class="roadmap-item">Multi-agent architecture</div>
+              <div class="roadmap-item">Supplier risk detection</div>
+              <div class="roadmap-item">Demand forecasting</div>
+              <div class="roadmap-item">Supply chain dashboard</div>
+            </div>
+          </div>
+
+          <!-- Phase 2 -->
+          <div style="flex:1;padding:0 5px;">
+            <div
+              style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;position:relative;z-index:2;">
+              <div
+                style="width:72px;height:72px;border-radius:50%;background:rgba(59,130,246,0.12);border:2px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:8px;">
+                🔵</div>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);letter-spacing:0.1em;">PHASE
+                2 · YEAR 1–2</span>
+            </div>
+            <div class="roadmap-phase" style="border-color:rgba(59,130,246,0.4);background:rgba(59,130,246,0.05);">
+              <h4 style="color:var(--blue);margin-bottom:14px;">Advanced Automation</h4>
+              <div class="roadmap-item">Inventory optimization</div>
+              <div class="roadmap-item">Logistics route optimization</div>
+              <div class="roadmap-item">Shipment delay prediction</div>
+              <div class="roadmap-item">Procurement automation</div>
+            </div>
+          </div>
+
+          <!-- Phase 3 -->
+          <div style="flex:1;padding-left:10px;">
+            <div
+              style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;position:relative;z-index:2;">
+              <div
+                style="width:72px;height:72px;border-radius:50%;background:rgba(139,92,246,0.12);border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:8px;">
+                🚀</div>
+              <span
+                style="font-family:'DM Mono',monospace;font-size:11px;color:var(--purple-light);letter-spacing:0.1em;">PHASE
+                3 · YEAR 2–3</span>
+            </div>
+            <div class="roadmap-phase" style="border-color:rgba(139,92,246,0.4);background:rgba(139,92,246,0.05);">
+              <h4 style="color:var(--purple-light);margin-bottom:14px;">Autonomous OS</h4>
+              <div class="roadmap-item">AI-driven production planning</div>
+              <div class="roadmap-item">Sustainability tracking</div>
+              <div class="roadmap-item">Predictive logistics intelligence</div>
+              <div class="roadmap-item">Full auto supply chain decisions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROI strip -->
+        <!-- <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div class="card" style="text-align:center;padding:16px;">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--teal);">$5.1M</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">Annual Benefit</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px;">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--purple-light);">425%
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">3-Year ROI</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px;">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--blue);">2.8mo</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">Payback Period</div>
+          </div>
+          <div class="card" style="text-align:center;padding:16px;">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--amber);">−60%</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">Manual Planning</div>
+          </div>
+        </div> -->
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 9 – DEMO
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-9">
+      <div class="glow-bg"
+        style="width:500px;height:500px;background:var(--purple);opacity:0.08;top:50%;left:50%;transform:translate(-50%,-50%);">
+      </div>
+
+      <div style="width:100%;max-width:960px;text-align:center;">
+        <div class="eyebrow" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span class="pulse"></span> Live System
+        </div>
+        <h2>Product <span class="gradient-text">Demo</span></h2>
+        <div class="divider" style="margin:16px auto;"></div>
+        <p class="lead" style="text-align:center;margin:0 auto 24px;">React + FastAPI + Ollama Llama3 — fully local,
+          zero cloud dependency.</p>
+
+        <!-- Mock dashboard UI recreation -->
+        <div class="demo-frame">
+          <div class="demo-titlebar">
+            <div class="demo-dot" style="background:#ef4444;"></div>
+            <div class="demo-dot" style="background:#f59e0b;"></div>
+            <div class="demo-dot" style="background:#10b981;"></div>
+            <span
+              style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--white);margin-left:8px;letter-spacing:0.02em;">Product
+              Demo</span>
+            <div
+              style="margin-left:auto;display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--teal);">
+              <span class="pulse"></span>System Active
+            </div>
+          </div>
+
+          <!-- Agent status bar -->
+          <div
+            style="padding:10px 16px;background:rgba(13,17,23,0.9);border-bottom:1px solid var(--border);display:flex;gap:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);align-items:center;">
+            <span>⚡ Agent Status:</span>
+            <span>⚙️ Orchestrator <span style="color:var(--muted);">Idle</span></span>
+            <span>📈 Demand <span style="color:var(--muted);">Idle</span></span>
+            <span>📦 Inventory <span style="color:var(--muted);">Idle</span></span>
+            <span style="color:var(--amber);">⚠️ Supplier <span
+                style="color:var(--amber);animation:pulse 2s infinite;display:inline-block;">Thinking...</span></span>
+            <span>⚡ Action <span style="color:var(--muted);">Idle</span></span>
+          </div>
+
+          <div class="demo-content">
+            <div class="demo-kpi">
+              <div class="val" style="color:var(--teal);">$234.5K</div>
+              <div class="lbl">Cost Savings</div>
+            </div>
+            <div class="demo-kpi">
+              <div class="val" style="color:var(--blue);">85.2%</div>
+              <div class="lbl">On-Time Delivery</div>
+            </div>
+            <div class="demo-kpi">
+              <div class="val" style="color:var(--white);">$17.2M</div>
+              <div class="lbl">Inventory Value</div>
+            </div>
+            <div class="demo-kpi">
+              <div class="val" style="color:var(--amber);">32%</div>
+              <div class="lbl">Supplier Risk Avg</div>
+            </div>
+            <div class="demo-kpi">
+              <div class="val" style="color:var(--purple-light);">91.5%</div>
+              <div class="lbl">Forecast Accuracy</div>
+            </div>
+            <div class="demo-kpi">
+              <div class="val" style="color:var(--teal);">96.8%</div>
+              <div class="lbl">Fill Rate</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:center;gap:16px;margin-top:20px;flex-wrap:wrap;">
+          <span class="tag tag-purple">5 Active Agents</span>
+          <span class="tag tag-blue">10 Workflows</span>
+          <span class="tag tag-teal">10 Products Tracked</span>
+          <span class="tag tag-amber">8 Suppliers Monitored</span>
+          <span class="tag tag-purple">Powered by LangChain + Ollama Llama3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+     SLIDE 10 – THANK YOU
+══════════════════════════════════════════════════ -->
+    <div class="slide" id="slide-10">
+      <div class="glow-bg"
+        style="width:500px;height:500px;background:var(--purple);opacity:0.08;top:50%;left:50%;transform:translate(-50%,-50%);">
+      </div>
+      <div class="glow-bg" style="width:300px;height:300px;background:var(--teal);opacity:0.06;bottom:0;right:0;"></div>
+
+      <div style="text-align:center;max-width:800px;">
+        <div class="glow-bg"
+          style="width:500px;height:500px;background:var(--purple);opacity:0.08;top:50%;left:50%;transform:translate(-50%,-50%);">
+        </div>
+        <div class="glow-bg" style="width:300px;height:300px;background:var(--teal);opacity:0.06;bottom:0;right:0;">
+        </div>
+
+        <div style="text-align:center;max-width:800px;">
+          <div class="eyebrow">We appreciate your time</div>
+          <h2>Thank You <span class="gradient-text">& Questions?</span></h2>
+          <div class="divider" style="margin:20px auto;"></div>
+          <p class="lead" style="text-align:center;margin:0 auto 36px;">SupplyMind — transforming reactive supply chains
+            into autonomous, intelligent ecosystems.</p>
+
+          <div class="thankyou-grid" style="margin:0 auto 32px;">
+            <div class="person-card">
+              <div class="person-avatar" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6);">RS</div>
+              <div class="person-name">Rushikesh Sonwane</div>
+            </div>
+            <div class="person-card">
+              <div class="person-avatar" style="background:linear-gradient(135deg,#10b981,#3b82f6);">RM</div>
+              <div class="person-name">Rishita Merchant</div>
+            </div>
+            <div class="person-card">
+              <div class="person-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">MS</div>
+              <div class="person-name">Mohini Singh</div>
+            </div>
+            <div class="person-card">
+              <div class="person-avatar" style="background:linear-gradient(135deg,#a78bfa,#10b981);">PU</div>
+              <div class="person-name">Parankusam Urmila</div>
+            </div>
+            <div class="person-card">
+              <div class="person-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">SA</div>
+              <div class="person-name">Saksham Agrawal</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
+            <span class="tag tag-purple">LangChain + LangGraph</span>
+            <span class="tag tag-teal">Ollama Llama3 (Local LLM)</span>
+            <span class="tag tag-blue">FastAPI + MongoDB</span>
+            <span class="tag tag-amber">React + Tailwind</span>
+          </div>
+
+          <div class="card" style="max-width:480px;margin:0 auto;text-align:left;">
+            <div
+              style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em;">
+              QUICK STATS</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--purple-light);">5
+                </div>
+                <div style="font-size:12px;color:var(--muted);">AI Agents</div>
+              </div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--teal);">10</div>
+                <div style="font-size:12px;color:var(--muted);">Workflows</div>
+              </div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--amber);">425%</div>
+                <div style="font-size:12px;color:var(--muted);">3-Yr ROI</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end slides-wrapper -->
+
+    <!-- NAV -->
+    <nav class="nav">
+      <button class="nav-btn" id="prevBtn">←</button>
+      <div id="navDots"></div>
+      <button class="nav-btn" id="nextBtn">→</button>
+    </nav>
+
+    <script>
+      // ── CANVAS PARTICLE BG ──
+      const canvas = document.getElementById('bg');
+      const ctx = canvas.getContext('2d');
+      let W, H, particles = [];
+
+      function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      for (let i = 0; i < 55; i++) {
+        particles.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          r: Math.random() * 1.8 + 0.3,
+          alpha: Math.random() * 0.4 + 0.1
+        });
+      }
+
+      function drawParticles() {
+        ctx.clearRect(0, 0, W, H);
+        particles.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) p.x = W;
+          if (p.x > W) p.x = 0;
+          if (p.y < 0) p.y = H;
+          if (p.y > H) p.y = 0;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(139,92,246,${p.alpha})`;
+          ctx.fill();
+        });
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 140) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `rgba(139,92,246,${0.06 * (1 - dist / 140)})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(drawParticles);
+      }
+      drawParticles();
+
+      // ── SLIDES LOGIC ──
+      const totalSlides = 10;
+      let current = 1;
+
+      const progressBar = document.getElementById('progressBar');
+      const slideCounter = document.getElementById('slideCounter');
+      const navDots = document.getElementById('navDots');
+
+      // Build dots
+      for (let i = 1; i <= totalSlides; i++) {
+        const d = document.createElement('div');
+        d.className = 'nav-dot' + (i === 1 ? ' active' : '');
+        d.addEventListener('click', () => goTo(i));
+        navDots.appendChild(d);
+      }
+
+      function goTo(n, dir) {
+        if (n < 1 || n > totalSlides || n === current) return;
+        const prev = document.getElementById('slide-' + current);
+        prev.classList.remove('active');
+        prev.classList.add('exit');
+        setTimeout(() => prev.classList.remove('exit'), 600);
+
+        current = n;
+
+        const next = document.getElementById('slide-' + current);
+        next.classList.add('active');
+
+        // Update dots
+        navDots.querySelectorAll('.nav-dot').forEach((d, i) => {
+          d.classList.toggle('active', i + 1 === current);
+        });
+
+        // Update counter & progress
+        slideCounter.textContent = String(current).padStart(2, '0') + ' / ' + String(totalSlides).padStart(2, '0');
+        progressBar.style.width = ((current / totalSlides) * 100) + '%';
+      }
+
+      document.getElementById('nextBtn').addEventListener('click', () => goTo(current + 1));
+      document.getElementById('prevBtn').addEventListener('click', () => goTo(current - 1));
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goTo(current - 1);
+      });
+
+      // Touch support
+      let touchStartX = 0;
+      document.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+      document.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (dx < -50) goTo(current + 1);
+        if (dx > 50) goTo(current - 1);
+      });
+
+      // Init progress bar
+      progressBar.style.width = ((1 / totalSlides) * 100) + '%';
+    </script>
+</body>
+
+</html>
